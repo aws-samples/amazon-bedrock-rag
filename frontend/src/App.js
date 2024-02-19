@@ -1,0 +1,53 @@
+import './App.css';
+import { useState } from "react"
+
+function App() {  
+  const [baseUrl,setBaseUrl] = useState(undefined)
+  const [genResponse,setGenResponse] = useState(undefined)
+  const [genCitation,setGenCitation] = useState(undefined)
+  const [spinner, setSpinner] = useState(false)
+  return (
+    <div >
+      <div style={{ backgroundColor: "#e2e2e2", padding: "20px", margin: "10px"}}>    
+        <strong style={{display: "block"}}>Step 1 - Enter API URL</strong><br/>
+        <input type="text" id="urlinput" style={{width: "97%"}} placeholder="https://example.execute-api.example.amazonaws.com/example/" 
+              onChange={(e) => {
+                setBaseUrl(e.target?.value)
+              }}
+        />
+      </div>  
+      <div style={{ backgroundColor: "#e2e2e2", padding: "20px", margin: "10px"}}>
+        <strong style={{display: "block"}}>Step 2 - Ask away! </strong><br/>
+        <div><strong>Question: </strong><input type="text" id="question" style={{width: "90%"}} placeholder="Enter your question here..."
+         onKeyDown={(e)=>{
+          if (e.key === "Enter") { 
+            setSpinner(true)
+            setGenResponse("")    
+            //docs is the name of the APIGateway resource used for sending the user query
+            fetch(
+              baseUrl + "docs",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: e.target?.value,
+              }
+            )
+              .then((res) => res.json())
+              .then((data) => {             
+                setSpinner(false)
+                setGenResponse(data.response)    
+                setGenCitation(data.citation)
+              });            
+          }           
+         }}
+        /><p/></div>
+        <div><strong>Answer: </strong><p id="response">{spinner?"Generating an answer...":genResponse}</p></div>
+        <div><strong>Citation: </strong><p id="citation">{spinner?"":genCitation}</p></div>
+      </div>       
+    </div>          
+  );
+}
+
+export default App;

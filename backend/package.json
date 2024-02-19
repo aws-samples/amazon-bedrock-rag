@@ -1,0 +1,22 @@
+{
+  "name": "backend",
+  "version": "0.1.0",
+  "bin": {
+    "backend": "bin/backend.js"
+  },
+  "scripts": {
+    "build": "echo \"The build step is not required when using JavaScript!\" && exit 0",
+    "cdk": "cdk",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "aws-cdk": "2.126.0",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "@cdklabs/generative-ai-cdk-constructs": "^0.1.60",
+    "aws-cdk-lib": "^2.126.0",
+    "constructs": "^10.0.0",
+    "uuid": "^9.0.1"
+  }
+}
