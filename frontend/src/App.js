@@ -39,7 +39,12 @@ function App() {
                 setSpinner(false)
                 setGenResponse(data.response)    
                 setGenCitation(data.citation)
-              });            
+              })  
+              .catch((err) => {
+                setSpinner(false)
+                setGenResponse('Error generating an answer. Please check your browser console, WAF configuration, Bedrock model access, and Lambda logs for debugging the error.')  
+                setGenCitation('')
+              });          
           }           
          }}
         /><p/></div>

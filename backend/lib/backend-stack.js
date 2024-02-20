@@ -63,7 +63,7 @@ class BackendStack extends Stack {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "index.handler",
       code: lambda.Code.fromAsset("./lambda/ingest"),
-      timeout: Duration.minutes(5),
+      timeout: Duration.minutes(15),
       environment: {
         KNOWLEDGE_BASE_ID: docsKnowledgeBase.knowledgeBaseId,
         DATA_SOURCE_ID: docsDataSource.dataSourceId,
@@ -93,7 +93,8 @@ class BackendStack extends Stack {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "index.handler",
       code: lambda.Code.fromAsset("./lambda/query"),
-      timeout: Duration.minutes(5),
+      //query lambda duration set to match API Gateway max timeout
+      timeout: Duration.seconds(29),
       environment: {
         KNOWLEDGE_BASE_ID: docsKnowledgeBase.knowledgeBaseId,
       },
