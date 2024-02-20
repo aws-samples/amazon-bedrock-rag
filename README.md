@@ -11,7 +11,7 @@ Need to find areas where Amazon is increasing investments to support future grow
 ## Data source
 [Amazon's 2022 annual report](https://s2.q4cdn.com/299287126/files/doc_financials/2023/ar/Amazon-2022-Annual-Report.pdf)
 
-## Example Project Outcome
+## Example outcome
 ![](./images/q-a.JPG)
 
 ## Solution Architecture
