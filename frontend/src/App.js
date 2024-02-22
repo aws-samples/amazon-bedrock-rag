@@ -31,7 +31,7 @@ function App() {
                 headers: {
                   "Content-Type": "application/json",
                 },
-                body: e.target?.value,
+                body: JSON.stringify({ question: e.target?.value }),
               }
             )
               .then((res) => res.json())

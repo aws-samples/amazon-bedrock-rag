@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@cdklabs/generative-ai-cdk-constructs": "^0.1.60",
+    "@middy/http-json-body-parser": "^5.2.4",
     "aws-cdk-lib": "^2.126.0",
     "constructs": "^10.0.0",
     "uuid": "^9.0.1"
