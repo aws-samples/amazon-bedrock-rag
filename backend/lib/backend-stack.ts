@@ -1,23 +1,20 @@
-const { Stack, Duration, CfnOutput, RemovalPolicy } = require("aws-cdk-lib");
-const s3 = require("aws-cdk-lib/aws-s3");
-const lambda = require("aws-cdk-lib/aws-lambda");
-const uuid = require("uuid");
-const { bedrock } = require("@cdklabs/generative-ai-cdk-constructs");
-const { S3EventSource } = require("aws-cdk-lib/aws-lambda-event-sources");
-const iam = require("aws-cdk-lib/aws-iam");
-const apigw = require("aws-cdk-lib/aws-apigateway");
-const wafv2 = require("aws-cdk-lib/aws-wafv2");
+import { Stack, StackProps, Duration, CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
+import * as uuid from "uuid";
+import { bedrock } from "@cdklabs/generative-ai-cdk-constructs";
+import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as iam  from 'aws-cdk-lib/aws-iam';
+import * as apigw  from 'aws-cdk-lib/aws-apigateway';
+import * as wafv2  from 'aws-cdk-lib/aws-wafv2';
+import { join } from 'path';
 
-class BackendStack extends Stack {
-  /**
-   *
-   * @param {Construct} scope
-   * @param {string} id
-   * @param {StackProps=} props
-   */
-  constructor(scope, id, props) {
+export class BackendStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-    
+    // The code that defines your stack goes here
     const docsBucket = new s3.Bucket(this, "docsbucket-" + uuid.v4(), {
       lifecycleRules: [{
         expiration: Duration.days(10),
@@ -59,10 +56,10 @@ class BackendStack extends Stack {
       events: [s3.EventType.OBJECT_CREATED_PUT],
     });
 
-    const lambdaIngestionJob = new lambda.Function(this, "IngestionJob", {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: "index.handler",
-      code: lambda.Code.fromAsset("./lambda/ingest"),
+    const lambdaIngestionJob = new NodejsFunction(this, 'IngestionJob', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: join(__dirname, '../lambda/ingest/index.js'),
+      functionName: `start-ingestion-trigger`,
       timeout: Duration.minutes(15),
       environment: {
         KNOWLEDGE_BASE_ID: docsKnowledgeBase.knowledgeBaseId,
@@ -89,14 +86,14 @@ class BackendStack extends Stack {
       },
     });
 
-    const lambdaQuery = new lambda.Function(this, "Query", {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: "index.handler",
-      code: lambda.Code.fromAsset("./lambda/query"),
+    const lambdaQuery = new NodejsFunction(this, 'Query', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: join(__dirname, '../lambda/query/index.js'),
+      functionName: `query-bedrock-llm`,
       //query lambda duration set to match API Gateway max timeout
       timeout: Duration.seconds(29),
       environment: {
-        KNOWLEDGE_BASE_ID: docsKnowledgeBase.knowledgeBaseId,
+        KNOWLEDGE_BASE_ID: docsKnowledgeBase.knowledgeBaseId
       },
     });
 
@@ -185,7 +182,6 @@ class BackendStack extends Stack {
     new CfnOutput(this, "DocsBucketName", {
       value: docsBucket.bucketName,
     });
+
   }
 }
-
-module.exports = { BackendStack };

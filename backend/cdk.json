@@ -1,5 +1,5 @@
 {
-  "app": "node bin/backend.js",
+  "app": "npx ts-node --prefer-ts-exts bin/backend.ts",
   "watch": {
     "include": [
       "**"
@@ -7,7 +7,9 @@
     "exclude": [
       "README.md",
       "cdk*.json",
-      "jest.config.js",
+      "**/*.d.ts",
+      "**/*.js",
+      "tsconfig.json",
       "package*.json",
       "yarn.lock",
       "node_modules",
@@ -58,6 +60,7 @@
     "@aws-cdk/aws-appsync:useArnForSourceApiAssociationIdentifier": true,
     "@aws-cdk/aws-rds:preventRenderingDeprecatedCredentials": true,
     "@aws-cdk/aws-codepipeline-actions:useNewDefaultBranchForCodeCommitSource": true,
-    "@aws-cdk/aws-cloudwatch-actions:changeLambdaPermissionLogicalIdForLambdaAction": true
+    "@aws-cdk/aws-cloudwatch-actions:changeLambdaPermissionLogicalIdForLambdaAction": true,
+    "@aws-cdk/aws-codepipeline:crossAccountKeysDefaultValueToFalse": true
   }
 }

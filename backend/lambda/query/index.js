@@ -7,9 +7,9 @@ const client = new BedrockAgentRuntimeClient({
   region: process.env.AWS_REGION,
 });
 
-const middy = require('@middy/core');
-const httpJsonBodyParser = require('@middy/http-json-body-parser');
-const httpHeaderNormalizer = require('@middy/http-header-normalizer');
+import middy from '@middy/core';
+import httpJsonBodyParser from '@middy/http-json-body-parser';
+import httpHeaderNormalizer from '@middy/http-header-normalizer';
 
 exports.handler = 
   middy()
