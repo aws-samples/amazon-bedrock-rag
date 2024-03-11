@@ -5,7 +5,8 @@ function App() {
   const [baseUrl,setBaseUrl] = useState(undefined)
   const [genResponse,setGenResponse] = useState(undefined)
   const [genCitation,setGenCitation] = useState(undefined)
-  const [spinner, setSpinner] = useState(false)
+  const [spinner, setSpinner] = useState(false)  
+  const [sessionId, setSessionId] = useState(undefined);
   return (
     <div >
       <div style={{ backgroundColor: "#e2e2e2", padding: "20px", margin: "10px"}}>    
@@ -17,7 +18,7 @@ function App() {
         />
       </div>  
       <div style={{ backgroundColor: "#e2e2e2", padding: "20px", margin: "10px"}}>
-        <strong style={{display: "block"}}>Step 2 - Ask away! </strong><br/>
+        <strong style={{display: "block"}}>Step 2 - Ask away! ({sessionId})</strong><br/>
         <div><strong>Question: </strong><input type="text" id="question" style={{width: "90%"}} placeholder="Enter your question here..."
          onKeyDown={(e)=>{
           if (e.key === "Enter") { 
@@ -31,7 +32,7 @@ function App() {
                 headers: {
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ question: e.target?.value }),
+                body: JSON.stringify({ requestSessionId: sessionId, question: e.target?.value }),
               }
             )
               .then((res) => res.json())
@@ -39,6 +40,7 @@ function App() {
                 setSpinner(false)
                 setGenResponse(data.response)    
                 setGenCitation(data.citation)
+                setSessionId(data.sessionId)
               })  
               .catch((err) => {
                 setSpinner(false)
