@@ -6,7 +6,10 @@ function App() {
   const [genResponse,setGenResponse] = useState(undefined)
   const [genCitation,setGenCitation] = useState(undefined)
   const [spinner, setSpinner] = useState(false)  
-  const [sessionId, setSessionId] = useState(undefined);
+  const [sessionId, setSessionId] = useState(undefined)
+  const [history, setHistory] = useState([])
+  
+
   return (
     <div >
       <div style={{ backgroundColor: "#e2e2e2", padding: "20px", margin: "10px"}}>    
@@ -41,6 +44,7 @@ function App() {
                 setGenResponse(data.response)    
                 setGenCitation(data.citation)
                 setSessionId(data.sessionId)
+                history.push({question: e.target?.value, response: data.response})
               })  
               .catch((err) => {
                 setSpinner(false)
@@ -52,7 +56,19 @@ function App() {
         /><p/></div>
         <div><strong>Answer: </strong><p id="response">{spinner?"Generating an answer...":genResponse}</p></div>
         <div><strong>Citation: </strong><p id="citation">{spinner?"":genCitation}</p></div>
-      </div>       
+        <br/>
+        <div><strong>History: </strong>
+        <table>
+          <tbody>{history.slice(0, 15).map((user, index) => (
+            <tr key={index}>
+              <td>{user.question.replace(/(.{50})..+/, "$1…")}</td>
+              <td>{user.response.replace(/(.{150})..+/, "$1…")}</td>
+            </tr>
+          ))}
+          </tbody>
+        </table>
+      </div> 
+      </div>
     </div>          
   );
 }
