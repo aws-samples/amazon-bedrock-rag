@@ -37,7 +37,7 @@ When the deployment completes,
 - Make note of the S3 bucket name shown at BackendStack.DocsBucketName output.
 
 ### Amazon Bedrock foundational model
-This solution utilizes Anthropic Claude foundation model during the retrieval and generation phase, and Amazon Titan Embeddings G1 - Text model for the knowledge base embedding model. Make sure you have [access to these foundation models](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
+This solution utilizes **Anthropic Claude Instant** foundation model during the retrieval and generation phase, and **Amazon Titan Embeddings G1 - Text** model for the knowledge base embedding model. Make sure you have [access to these foundation models](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
 
 ### Upload content to S3 bucket
 Get a recent publicly available Amazon's annual report and copy it to the S3 bucket name noted previously. For a quick test, you can copy the [Amazon's 2022 annual report](https://s2.q4cdn.com/299287126/files/doc_financials/2023/ar/Amazon-2022-Annual-Report.pdf) using the [AWS S3 Console](https://docs.aws.amazon.com/AmazonS3/latest/userguide/upload-objects.html).

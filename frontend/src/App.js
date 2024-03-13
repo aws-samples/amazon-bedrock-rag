@@ -6,7 +6,10 @@ function App() {
   const [genResponse,setGenResponse] = useState(undefined)
   const [genCitation,setGenCitation] = useState(undefined)
   const [spinner, setSpinner] = useState(false)  
-  const [sessionId, setSessionId] = useState(undefined);
+  const [sessionId, setSessionId] = useState(undefined)
+  const [history, setHistory] = useState([])
+  
+
   return (
     <div >
       <div style={{ backgroundColor: "#e2e2e2", padding: "20px", margin: "10px"}}>    
@@ -18,7 +21,7 @@ function App() {
         />
       </div>  
       <div style={{ backgroundColor: "#e2e2e2", padding: "20px", margin: "10px"}}>
-        <strong style={{display: "block"}}>Step 2 - Ask away! ({sessionId})</strong><br/>
+        <strong style={{display: "block"}}>Step 2 - Ask away!</strong><br/>
         <div><strong>Question: </strong><input type="text" id="question" style={{width: "90%"}} placeholder="Enter your question here..."
          onKeyDown={(e)=>{
           if (e.key === "Enter") { 
@@ -41,6 +44,8 @@ function App() {
                 setGenResponse(data.response)    
                 setGenCitation(data.citation)
                 setSessionId(data.sessionId)
+                setHistory([...history, {question: e.target?.value, response: data.response}])
+                console.log(`Session ID: ${sessionId}`)
               })  
               .catch((err) => {
                 setSpinner(false)
@@ -52,7 +57,16 @@ function App() {
         /><p/></div>
         <div><strong>Answer: </strong><p id="response">{spinner?"Generating an answer...":genResponse}</p></div>
         <div><strong>Citation: </strong><p id="citation">{spinner?"":genCitation}</p></div>
-      </div>       
+        <br/>
+        <div><strong>History: </strong><p/></div>
+          {history.slice(-15).map((item, index) => (
+           <div>
+              <div><strong>Q: </strong>{item.question}</div>
+              <div><strong>A: </strong>{item.response}</div>
+              <br/>
+            </div>
+          ))}
+      </div>
     </div>          
   );
 }
