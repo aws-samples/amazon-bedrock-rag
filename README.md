@@ -9,7 +9,7 @@ Retrieval-Augmented Generation (RAG) is the process of optimizing the output of 
 Need to find areas where Amazon is increasing investments to support future growth. The questions related to this exploration will be asked in a natural language by humans. The response need to include a reference to the source document. 
 
 ## User Experience
-![](./images/q-a-rag.JPG)
+![](./images/q-a.JPG)
 
 ## Solution Architecture
 The following solution architecture shows a workflow and a combination of AWS services to support the usecase described above.
@@ -49,7 +49,7 @@ Get a recent publicly available Amazon's annual report and copy it to the S3 buc
 - Use the user interface shown in the browser.
 - For Step 1, enter the API Gateway endpoint URL noted previously.
 - For Step 2, you can enter a question of the form "Where is Amazon investing to support growth?" and press the enter key to see the generated answer including a citation.
-![](./images/q-a.JPG)
+![](./images/q-a-history.JPG)
 
 ## Cleanup
 Use "cdk destroy" to delete the stack of cloud resources created in this solution deployment.
