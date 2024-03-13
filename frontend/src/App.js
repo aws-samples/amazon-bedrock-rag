@@ -57,17 +57,14 @@ function App() {
         <div><strong>Answer: </strong><p id="response">{spinner?"Generating an answer...":genResponse}</p></div>
         <div><strong>Citation: </strong><p id="citation">{spinner?"":genCitation}</p></div>
         <br/>
-        <div><strong>History: </strong>
-        <table>
-          <tbody>{history.slice(0, 15).map((user, index) => (
-            <tr key={index}>
-              <td>{user.question.replace(/(.{50})..+/, "$1…")}</td>
-              <td>{user.response.replace(/(.{150})..+/, "$1…")}</td>
-            </tr>
+        <div><strong>History: </strong><p/></div>
+          {[...history].reverse().slice(0, 15).map((item, index) => (
+           <div>
+              <div><strong>Q: </strong>{item.question}</div>
+              <div><strong>A: </strong>{item.response}</div>
+              <br/>
+            </div>
           ))}
-          </tbody>
-        </table>
-      </div> 
       </div>
     </div>          
   );
