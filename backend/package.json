@@ -20,7 +20,7 @@
     "typescript": "~5.3.3"
   },
   "dependencies": {
-    "@cdklabs/generative-ai-cdk-constructs": "^0.1.78",
+    "@cdklabs/generative-ai-cdk-constructs": "^0.1.106",
     "@middy/core": "^5.2.4",
     "@middy/http-header-normalizer": "^5.2.4",
     "@middy/http-json-body-parser": "^5.2.4",
