@@ -9,11 +9,13 @@ Retrieval-Augmented Generation (RAG) is the process of optimizing the output of 
 Need to find areas where Amazon is increasing investments to support future growth. The questions related to this exploration will be asked in a natural language by humans. The response need to include a reference to the source document. 
 
 ## User Experience
-![](./images/q-a.JPG)
+![](./images/RAG_App_Redesign.png)
+![](./images/Url_Form.png)
 
 ## Solution Architecture
 The following solution architecture shows a workflow and a combination of AWS services to support the usecase described above.
-![](./images/sol-arch.JPG)
+![](./images/Bedrock-Rag-App-Architecture.jpg) 
+![](./images/Update_SeedURLs_Bedrock.jpg)
 - Note that with Amazon OpeSearch Serverless, you will be billed for [4 OCUs at a minimum](https://aws.amazon.com/opensearch-service/pricing/#Amazon_OpenSearch_Serverless) at all times. Follow instructions in the [Cleanup](#cleanup) section to avoid charges.
 
 ## Deploy solution
@@ -37,7 +39,10 @@ When the deployment completes,
 - Make note of the S3 bucket name shown at BackendStack.DocsBucketName output.
 
 ### Amazon Bedrock foundational model
-This solution utilizes **Anthropic Claude Instant** foundation model during the retrieval and generation phase, and **Amazon Titan Embeddings G1 - Text** model for the knowledge base embedding model. Make sure you have [access to these foundation models](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
+This solution allows users to select which foundational model they want to use during the retrieval and generation phase. The default model is **Anthropic Claude Instant**. For the knowledge base embedding model, this solution uses **Amazon Titan Embeddings G1 - Text** model. Make sure you have [access to these foundation models](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
+
+### Upload web content
+This solution initializes the web data source with the url `https://www.aboutamazon.com/news/amazon-offices`. There are two ways the seed urls and filter list can be updated: via the console or using the frontend web url form. Note, once you update the seed urls this does not trigger an ingestion job. Ingestion jobs occur every 12 days. If you wish to change this value, the recurrence schedule can be updated in the `backend-stack.js` file.
 
 ### Upload content to S3 bucket
 Get a recent publicly available Amazon's annual report and copy it to the S3 bucket name noted previously. For a quick test, you can copy the [Amazon's 2022 annual report](https://s2.q4cdn.com/299287126/files/doc_financials/2023/ar/Amazon-2022-Annual-Report.pdf) using the [AWS S3 Console](https://docs.aws.amazon.com/AmazonS3/latest/userguide/upload-objects.html).
@@ -48,11 +53,11 @@ Get a recent publicly available Amazon's annual report and copy it to the S3 buc
 - Run "npm run start" to launch the frontend application from the browser. 
 - Use the user interface shown in the browser.
 - For Step 1, enter the API Gateway endpoint URL noted previously.
-- For Step 2, you can enter a question of the form "Where is Amazon investing to support growth?" and press the enter key to see the generated answer including a citation.
+- For Step 2, you can enter a question of the form "Which cities have offices?" and press the enter key to see the generated answer including a citation.
 ![](./images/q-a-history.JPG)
 
 ## Cleanup
-Use "cdk destroy" to delete the stack of cloud resources created in this solution deployment.
+In the AWS console, go to the Amazon Bedrock microservice and select the knowledge base configured with your backend stack. Select the `WebCrawlerDataSource` and click delete. Then use "cdk destroy" to delete the stack of cloud resources created in this solution deployment.
 
 ## Security checks
 - npm audit is used to confirm there are no vulnerabilities.
@@ -65,3 +70,4 @@ Use "cdk destroy" to delete the stack of cloud resources created in this solutio
 ## Credit
 - [Knowledge Bases now delivers fully managed RAG experience in Amazon Bedrock](https://aws.amazon.com/blogs/aws/knowledge-bases-now-delivers-fully-managed-rag-experience-in-amazon-bedrock/)
 - [Building Serverless Resume AI](https://community.aws/content/2bi5tqITxIperTzMsD3ohYbPIA4/easy-rag-with-amazon-bedrock-knowledge-base?lang=en)
+- [Implementing Web Crawling in Amazon Bedrock](https://aws.amazon.com/blogs/machine-learning/implement-web-crawling-in-knowledge-bases-for-amazon-bedrock/)
