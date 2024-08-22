@@ -144,7 +144,7 @@ export class BackendStack extends Stack {
     );
 
     const rule = new events.Rule(this, "ScheduleWebCrawlRule", {
-      schedule: events.Schedule.rate(Duration.days(12)), // Adjust the cron expression as needed
+      schedule: events.Schedule.rate(Duration.days(1)), // Adjust the cron expression as needed
     });
 
     rule.addTarget(new targets.LambdaFunction(lambdaCrawlJob));

@@ -56,7 +56,7 @@ The deployed solution initializes the web data source called "WebCrawlerDataSour
 ![](./images/q-a-history.JPG)
 
 ## Cleanup
-In the AWS console, go to the Amazon Bedrock microservice and select the knowledge base configured with your backend stack. Select the `WebCrawlerDataSource` and click delete. Then use "cdk destroy" to delete the stack of cloud resources created in this solution deployment.
+Use "cdk destroy" to delete the stack of cloud resources created in this solution deployment.
 
 ## Security checks
 - npm audit is used to confirm there are no vulnerabilities.
