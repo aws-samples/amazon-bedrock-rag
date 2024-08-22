@@ -1,10 +1,11 @@
 const {
   BedrockAgentClient,
   CreateDataSourceCommand,
+  DeleteDataSourceCommand,
 } = require("@aws-sdk/client-bedrock-agent");
 const client = new BedrockAgentClient({ region: process.env.AWS_REGION });
 
-const DATA_SOURCE_NAME = "WebCrawlerDataSource"
+const DATA_SOURCE_NAME = "WebCrawlerDataSource";
 
 const createDataSource = async () => {
   try {
@@ -45,7 +46,7 @@ const createDataSource = async () => {
       PhysicalResourceId: dataSourceResponse.dataSource?.dataSourceId,
       Data: {
         DataSourceId: dataSourceResponse.dataSource?.dataSourceId,
-        DataSourceName: DATA_SOURCE_NAME
+        DataSourceName: DATA_SOURCE_NAME,
       },
     };
   } catch (e) {
@@ -53,11 +54,29 @@ const createDataSource = async () => {
   }
 };
 
+const deleteDataSource = async (dataSourceId) => {
+  try {
+    const deleteInput = {
+      knowledgeBaseId: process.env.KNOWLEDGE_BASE_ID,
+      dataSourceId: dataSourceId,
+    };
+
+    const deleteCommand = new DeleteDataSourceCommand(deleteInput);
+    await client.send(deleteCommand);
+    return {
+      Status: "SUCCESS",
+    };
+  } catch (e) {
+    console.log("Error", e);
+  }
+};
 
 exports.handler = async (event, context) => {
   switch (event.RequestType) {
     case "Create":
       return await createDataSource();
+    case "Delete":
+      return await deleteDataSource(event.PhysicalResourceId);
     default:
       console.log("event", event);
   }

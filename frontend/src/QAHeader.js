@@ -1,4 +1,4 @@
-import { useState} from "react";
+import { useState } from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import { Typography } from "@mui/material";
@@ -7,12 +7,14 @@ import Tooltip from "@mui/material/Tooltip";
 import Divider from "@mui/material/Divider";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
-import InputIcon from '@mui/icons-material/Input';
-import InputAdornment from '@mui/material/InputAdornment';
-import OutlinedInput from '@mui/material/OutlinedInput';
+import InputIcon from "@mui/icons-material/Input";
+import InputAdornment from "@mui/material/InputAdornment";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import PropTypes from "prop-types";
 
 export const QAHeader = (props) => {
-  const {setSelectedModel, setBaseUrl, modelList, selectedModel, baseUrl} = props
+  const { setSelectedModel, setBaseUrl, modelList, selectedModel, baseUrl } =
+    props;
   const [url, setUrl] = useState(baseUrl ?? "");
   const modelListDisabledText =
     "Input a valid base url to enable model selection";
@@ -35,18 +37,18 @@ export const QAHeader = (props) => {
         id="standard-basic"
         value={url}
         sx={{ width: "100%" }}
-        name='Base Url'
+        name="Base Url"
         onChange={(event) => setUrl(event.target?.value)}
         onKeyDown={handleKeyDown}
         placeholder="https://example.execute-api.example.amazonaws.com/example/"
         endAdornment={
-          <InputAdornment position = 'end'>
+          <InputAdornment position="end">
             <IconButton
-              color='primary'
+              color="primary"
               onClick={() => setBaseUrl(url)}
               onMouseDown={() => setBaseUrl(url)}
             >
-              <InputIcon/>
+              <InputIcon />
             </IconButton>
           </InputAdornment>
         }
@@ -63,21 +65,27 @@ export const QAHeader = (props) => {
       </Typography>
       <Alert severity="info">
         Make sure to check in your AWS console that you have access to the
-        selected model.
-        Note: if no model is selected, the default model used will be anthropic.claude-instant-v1 
+        selected model. Note: if no model is selected, the default model used
+        will be anthropic.claude-instant-v1. Check out the list of supported
+        models and regions{" "}
+        <a
+          href="https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-supported.html"
+          target="_blank"
+          rel="noreferrer"
+        >
+          here
+        </a>
       </Alert>
       <br></br>
       <Box sx={{ paddingBottom: "20px" }}>
-        <Tooltip
-          title={modelList.length === 0 ? modelListDisabledText : null}
-        >
+        <Tooltip title={modelList.length === 0 ? modelListDisabledText : null}>
           <Autocomplete
-            disabled={modelList.length === 0}
+            disabled={!baseUrl}
             includeInputInList
-            id="auto-complete"
+            id="model-select"
             autoComplete
             options={modelList}
-            getOptionLabel={(option) => option.modelId}
+            getOptionLabel={(option) => option.modelId ?? option}
             renderOption={(props, option) => (
               <Typography {...props} variant="standard">
                 {option.modelName} : {option.modelId}{" "}
@@ -88,11 +96,27 @@ export const QAHeader = (props) => {
               <TextField {...params} label="Choose a Model" />
             )}
             defaultValue={null}
-            value={selectedModel}
-            onChange={(event, value) => setSelectedModel(value?.modelArn)}
+            value={selectedModel?.modelId ?? null}
+            onChange={(event, value) => {
+              setSelectedModel(value);
+            }}
           />
         </Tooltip>
       </Box>
     </div>
   );
+};
+
+QAHeader.propTypes = {
+  setSelectedModel: PropTypes.func.isRequired,
+  setBaseUrl: PropTypes.func.isRequired,
+  modelList: PropTypes.array,
+  selectedModel: PropTypes.string,
+  baseUrl: PropTypes.string,
+};
+
+QAHeader.defaultProps = {
+  modelList: [],
+  selectedModel: null,
+  baseUrl: "",
 };

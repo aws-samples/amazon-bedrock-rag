@@ -16,9 +16,9 @@ exports.handler =
   .use(httpJsonBodyParser())
   .use(httpHeaderNormalizer())
   .handler(async (event, context) => {
-    const { question, requestSessionId, modelArn } = event.body;
+    const { question, requestSessionId, modelId } = event.body;
     try{
-      console.log('model', modelArn);
+      console.log('model', modelId);
       const input = {
         sessionId: requestSessionId,
         input: {
@@ -29,7 +29,7 @@ exports.handler =
           knowledgeBaseConfiguration: {
             knowledgeBaseId: process.env.KNOWLEDGE_BASE_ID,
             //Claude Instant v1.2 is a fast, affordable yet still very capable model, which can handle a range of tasks including casual dialogue, text analysis, summarization, and document question-answering.
-            modelArn: modelArn ? `${modelArn}` : `arn:aws:bedrock:${process.env.AWS_REGION}::foundation-model/anthropic.claude-instant-v1`,
+            modelArn: modelId ? `arn:aws:bedrock:${process.env.AWS_REGION}::foundation-model/${modelId}` : `arn:aws:bedrock:${process.env.AWS_REGION}::foundation-model/anthropic.claude-instant-v1`,
           },
         },
       };
@@ -37,14 +37,14 @@ exports.handler =
       const response = await client.send(command);
       console.log('query response citation', response.citations);
       response.citations.forEach((c) => console.log("generatedResponsePart: ", c.generatedResponsePart, " retrievedReferences: ", c.retrievedReferences ))
-      const sourceType = response.citations[0]?.retrievedReferences[0]?.location.type
+      const location = response.citations[0]?.retrievedReferences[0]?.location
+      const sourceType = location?.type
+
       switch(sourceType){
         case "S3":
-          const s3Reference = response.citations[0]?.retrievedReferences[0]?.location.s3Location.uri;
-          return makeResults(200, response.output.text, s3Reference, response.sessionId);
+          return makeResults(200, response.output.text, location?.s3Location.uri, response.sessionId);
         case "WEB":
-          const webReference = response.citations[0]?.retrievedReferences[0]?.location.webLocation.url;
-          return makeResults(200, response.output.text, webReference, response.sessionId);
+          return makeResults(200, response.output.text, location?.webLocation.url, response.sessionId);
         default:
           return makeResults(200, response.output.text,null,response.sessionId);
       }

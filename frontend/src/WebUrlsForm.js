@@ -15,17 +15,14 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
+import PropTypes from 'prop-types';
 
 const UrlSourcesForm = (props) => {
   const { exclusionFilters, inclusionFilters, seedUrlList, handleUpdateUrls } =
     props;
-  const [urls, setUrls] = useState(seedUrlList ? seedUrlList : []);
-  const [newExclusionFilters, setExclusionFilters] = useState(
-    exclusionFilters ? exclusionFilters : []
-  );
-  const [newInclusionFilters, setInclusionFilters] = useState(
-    inclusionFilters ? inclusionFilters : []
-  );
+  const [urls, setUrls] = useState(seedUrlList);
+  const [newExclusionFilters, setNewExclusionFilters] = useState(exclusionFilters);
+  const [newInclusionFilters, setNewInclusionFilters] = useState(inclusionFilters);
   const [isMaxNumUrls, setIsMaxNumUrls] = useState(seedUrlList.length >= 10);
   const [success, setSuccess] = useState(false);
   const [open, setOpen] = useState(false);
@@ -69,13 +66,13 @@ const UrlSourcesForm = (props) => {
   const handleExclusionFilterUpdate = (filter, index) => {
     const newFilters = [...exclusionFilters];
     newFilters[index] = filter;
-    setExclusionFilters(newFilters);
+    setNewExclusionFilters(newFilters);
   };
 
   const handleInclusionFilterUpdate = (filter, index) => {
     const newFilters = [...inclusionFilters];
     newFilters[index] = filter;
-    setInclusionFilters(newFilters);
+    setNewInclusionFilters(newFilters);
   };
 
   const addUrlInput = () => {
@@ -119,7 +116,7 @@ const UrlSourcesForm = (props) => {
               ? urls?.map((url, index) => (
                   <TextField
                     variant="standard"
-                    key={index}
+                    key={url}
                     label={`#${index + 1}`}
                     value={url}
                     onChange={(e) => handleUrlUpdate(e.target?.value, index)}
@@ -147,7 +144,7 @@ const UrlSourcesForm = (props) => {
                   <TextField
                     variant="standard"
                     value={filter}
-                    key={index}
+                    key={filter}
                     onChange={(e) =>
                       handleExclusionFilterUpdate(e.target?.value, index)
                     }
@@ -161,14 +158,14 @@ const UrlSourcesForm = (props) => {
                 onClick={() => {
                   const filters = [...newExclusionFilters];
                   filters.splice(filters.length - 1, 1);
-                  setExclusionFilters(filters);
+                  setNewExclusionFilters(filters);
                 }}
               >
                 <RemoveCircleIcon />
               </IconButton>
               <IconButton
                 onClick={() =>
-                  setExclusionFilters([...newExclusionFilters, ""])
+                  setNewExclusionFilters([...newExclusionFilters, ""])
                 }
                 color="primary"
               >
@@ -183,7 +180,7 @@ const UrlSourcesForm = (props) => {
                   <TextField
                     variant="standard"
                     value={filter}
-                    key={index}
+                    key={filter}
                     onChange={(e) =>
                       handleInclusionFilterUpdate(e.target?.value, index)
                     }
@@ -197,14 +194,14 @@ const UrlSourcesForm = (props) => {
                 onClick={() => {
                   const filters = [...newInclusionFilters];
                   filters.splice(filters.length - 1, 1);
-                  setExclusionFilters(filters);
+                  setNewExclusionFilters(filters);
                 }}
               >
                 <RemoveCircleIcon />
               </IconButton>
               <IconButton
                 onClick={() =>
-                  setInclusionFilters([...newInclusionFilters, ""])
+                  setNewInclusionFilters([...newInclusionFilters, ""])
                 }
                 color="primary"
               >
@@ -241,5 +238,18 @@ const UrlSourcesForm = (props) => {
     </div>
   );
 };
+
+UrlSourcesForm.propTypes = {
+  exclusionFilters: PropTypes.array,
+  inclusionFilters: PropTypes.array,
+  seedUrlList: PropTypes.array,
+  handleUpdateUrls: PropTypes.func.isRequired
+}
+
+UrlSourcesForm.defaultProps = {
+  exclusionFilters: [],
+  inclusionFilters: [],
+  seedUrlList: [],
+}
 
 export default UrlSourcesForm;

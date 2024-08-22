@@ -5,7 +5,7 @@ import {
   CfnOutput,
   RemovalPolicy,
   ArnFormat,
-  CustomResource
+  CustomResource,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
@@ -18,12 +18,10 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import * as logs from "aws-cdk-lib/aws-logs";
-import * as cr from 'aws-cdk-lib/custom-resources';
-import * as events from 'aws-cdk-lib/aws-events';
-import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as cr from "aws-cdk-lib/custom-resources";
+import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
 import { join } from "path";
-
-
 
 export class BackendStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -31,13 +29,9 @@ export class BackendStack extends Stack {
 
     /** Knowledge Base */
 
-    const knowledgeBase = new bedrock.KnowledgeBase(
-      this,
-      "knowledgeBase",
-      {
-        embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V1,
-      }
-    );
+    const knowledgeBase = new bedrock.KnowledgeBase(this, "knowledgeBase", {
+      embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V1,
+    });
 
     /** S3 bucket for Bedrock data source */
     const docsBucket = new s3.Bucket(this, "docsbucket-" + uuid.v4(), {
@@ -73,26 +67,37 @@ export class BackendStack extends Stack {
 
     /** Web Crawler for bedrock data Source */
 
-    const createWebDataSourceLambda = new NodejsFunction(this, 'CreateWebDataSourceHandler', {
-      runtime: Runtime.NODEJS_18_X,
-      entry: join(__dirname, "../lambda/dataSource/index.js"),
-      functionName: `create-web-data-source`,
-      timeout: Duration.minutes(1),
-      environment: {
-        KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
-      },
-    });
-    
+    const createWebDataSourceLambda = new NodejsFunction(
+      this,
+      "CreateWebDataSourceHandler",
+      {
+        runtime: Runtime.NODEJS_18_X,
+        entry: join(__dirname, "../lambda/dataSource/index.js"),
+        functionName: `create-web-data-source`,
+        timeout: Duration.minutes(1),
+        environment: {
+          KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
+        },
+      }
+    );
 
-    const webDataSourceProvider = new cr.Provider(this, 'WebDataSourceProvider', {
-      onEventHandler: createWebDataSourceLambda,
-      logRetention: logs.RetentionDays.ONE_DAY
-    });
+    const webDataSourceProvider = new cr.Provider(
+      this,
+      "WebDataSourceProvider",
+      {
+        onEventHandler: createWebDataSourceLambda,
+        logRetention: logs.RetentionDays.ONE_DAY,
+      }
+    );
 
-    const createWebDataSourceResource = new CustomResource(this, 'WebDataSourceResource', {
-      serviceToken: webDataSourceProvider.serviceToken,
-      resourceType: 'Custom::BedrockWebDataSource',
-    });
+    const createWebDataSourceResource = new CustomResource(
+      this,
+      "WebDataSourceResource",
+      {
+        serviceToken: webDataSourceProvider.serviceToken,
+        resourceType: "Custom::BedrockWebDataSource",
+      }
+    );
 
     /** S3 Ingest Lambda for S3 data source */
 
@@ -126,7 +131,8 @@ export class BackendStack extends Stack {
       timeout: Duration.minutes(15),
       environment: {
         KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
-        DATA_SOURCE_ID: createWebDataSourceResource.getAttString('DataSourceId'),
+        DATA_SOURCE_ID:
+          createWebDataSourceResource.getAttString("DataSourceId"),
       },
     });
 
@@ -137,7 +143,7 @@ export class BackendStack extends Stack {
       })
     );
 
-    const rule = new events.Rule(this, 'ScheduleWebCrawlRule', {
+    const rule = new events.Rule(this, "ScheduleWebCrawlRule", {
       schedule: events.Schedule.rate(Duration.days(12)), // Adjust the cron expression as needed
     });
 
@@ -152,8 +158,9 @@ export class BackendStack extends Stack {
       timeout: Duration.minutes(15),
       environment: {
         KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
-        DATA_SOURCE_ID: createWebDataSourceResource.getAttString('DataSourceId'),
-        DATA_SOURCE_NAME: "WebCrawlerDataSource" 
+        DATA_SOURCE_ID:
+          createWebDataSourceResource.getAttString("DataSourceId"),
+        DATA_SOURCE_NAME: "WebCrawlerDataSource",
       },
     });
 
@@ -162,7 +169,7 @@ export class BackendStack extends Stack {
         actions: ["bedrock:GetDataSource", "bedrock:UpdateDataSource"],
         resources: [knowledgeBase.knowledgeBaseArn],
       })
-    )
+    );
 
     /** Lambda to get the list of seed urls in Web crawler data source*/
 
@@ -173,7 +180,8 @@ export class BackendStack extends Stack {
       timeout: Duration.minutes(15),
       environment: {
         KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
-        DATA_SOURCE_ID: createWebDataSourceResource.getAttString('DataSourceId'),
+        DATA_SOURCE_ID:
+          createWebDataSourceResource.getAttString("DataSourceId"),
       },
     });
 
@@ -182,28 +190,18 @@ export class BackendStack extends Stack {
         actions: ["bedrock:GetDataSource"],
         resources: [knowledgeBase.knowledgeBaseArn],
       })
-    )
-
-    const lambdaModelAccess = new NodejsFunction(this, "ModelAccess", {
-      runtime: Runtime.NODEJS_20_X,
-      entry: join(__dirname, "../lambda/modelAccess/index.js"),
-      functionName: `get-model-access`,
-      timeout: Duration.seconds(29),
-    });
-
-    lambdaModelAccess.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["bedrock:GetFoundationModel", "bedrock:ListFoundationModels"],
-        resources: ["*"],
-      })
     );
 
     createWebDataSourceLambda.addToRolePolicy(
       new iam.PolicyStatement({
-        actions: ["bedrock:CreateDataSource"],
+        actions: [
+          "bedrock:CreateDataSource",
+          "bedrock:UpdateDataSource",
+          "bedrock:DeleteDataSource",
+        ],
         resources: [knowledgeBase.knowledgeBaseArn],
       })
-    )
+    );
 
     const whitelistedIps = [Stack.of(this).node.tryGetContext("allowedip")];
 
@@ -242,15 +240,11 @@ export class BackendStack extends Stack {
     apiGateway.root
       .addResource("docs")
       .addMethod("POST", new apigw.LambdaIntegration(lambdaQuery));
-    
+
     apiGateway.root
       .addResource("web-urls")
       .addMethod("POST", new apigw.LambdaIntegration(lambdaUpdateWebUrls));
 
-    apiGateway.root
-      .addResource("models")
-      .addMethod("GET", new apigw.LambdaIntegration(lambdaModelAccess));
-    
     apiGateway.root
       .addResource("urls")
       .addMethod("GET", new apigw.LambdaIntegration(lambdaGetWebUrls));
@@ -318,21 +312,17 @@ export class BackendStack extends Stack {
     });
 
     // Create logging configuration with log group as destination
-    const logConfig = new wafv2.CfnLoggingConfiguration(
-      this,
-      "WAFLoggingConfiguration",
-      {
-        resourceArn: webACL.attrArn,
-        logDestinationConfigs: [
-          Stack.of(this).formatArn({
-            arnFormat: ArnFormat.COLON_RESOURCE_NAME,
-            service: "logs",
-            resource: "log-group",
-            resourceName: webAclLogGroup.logGroupName,
-          }),
-        ],
-      }
-    );
+    new wafv2.CfnLoggingConfiguration(this, "WAFLoggingConfiguration", {
+      resourceArn: webACL.attrArn,
+      logDestinationConfigs: [
+        Stack.of(this).formatArn({
+          arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+          service: "logs",
+          resource: "log-group",
+          resourceName: webAclLogGroup.logGroupName,
+        }),
+      ],
+    });
 
     // Associate with our gateway
     const webACLAssociation = new wafv2.CfnWebACLAssociation(

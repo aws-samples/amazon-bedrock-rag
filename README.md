@@ -5,16 +5,15 @@ Retrieval-Augmented Generation (RAG) is the process of optimizing the output of 
 
 [Knowledge Bases for Amazon Bedrock](https://aws.amazon.com/bedrock/knowledge-bases/) is a fully managed capability that helps you implement the entire RAG workflow from ingestion to retrieval and prompt augmentation without having to build custom integrations to data sources and manage data flows. Session context management is built in, so your app can readily support multi-turn conversations.
 
-## Usecase
-Need to find areas where Amazon is increasing investments to support future growth. The questions related to this exploration will be asked in a natural language by humans. The response need to include a reference to the source document. 
+As part of creating a knowledge base, you configure a data source and a vector store of your choice. A data source connector allows you to connect your proprietary data to a knowledge base. Once you’ve configured a data source connector, you can sync or keep your data up to date with your knowledge base and make your data available for querying. Amazon Bedrock first splits your documents or content into manageable chunks for efficient data retrieval. The chunks are then converted to embeddings and written to a vector index (vector representation of the data), while maintaining a mapping to the original document. The vector embeddings allow the texts to be mathematically compared for similarity.
 
-## User Experience
-![](./images/RAG_App_Redesign.png)
-![](./images/Url_Form.png)
+This project is implemented with two data sources; a data source for documents stored in Amazon S3 and another data source for content published on a website. A vector search collection is created in Amazon OpenSearch Serverless for vector storage. 
 
-## Solution Architecture
-The following solution architecture shows a workflow and a combination of AWS services to support the usecase described above.
+## Solution Architecture Diagrams
+Q&A Chatbot
 ![](./images/Bedrock-Rag-App-Architecture.jpg) 
+
+Add new websites for web datasource
 ![](./images/Update_SeedURLs_Bedrock.jpg)
 - Note that with Amazon OpeSearch Serverless, you will be billed for [4 OCUs at a minimum](https://aws.amazon.com/opensearch-service/pricing/#Amazon_OpenSearch_Serverless) at all times. Follow instructions in the [Cleanup](#cleanup) section to avoid charges.
 
@@ -41,11 +40,11 @@ When the deployment completes,
 ### Amazon Bedrock foundational model
 This solution allows users to select which foundational model they want to use during the retrieval and generation phase. The default model is **Anthropic Claude Instant**. For the knowledge base embedding model, this solution uses **Amazon Titan Embeddings G1 - Text** model. Make sure you have [access to these foundation models](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
 
-### Upload web content
-This solution initializes the web data source with the url `https://www.aboutamazon.com/news/amazon-offices`. There are two ways the seed urls and filter list can be updated: via the console or using the frontend web url form. Note, once you update the seed urls this does not trigger an ingestion job. Ingestion jobs occur every 12 days. If you wish to change this value, the recurrence schedule can be updated in the `backend-stack.js` file.
-
 ### Upload content to S3 bucket
-Get a recent publicly available Amazon's annual report and copy it to the S3 bucket name noted previously. For a quick test, you can copy the [Amazon's 2022 annual report](https://s2.q4cdn.com/299287126/files/doc_financials/2023/ar/Amazon-2022-Annual-Report.pdf) using the [AWS S3 Console](https://docs.aws.amazon.com/AmazonS3/latest/userguide/upload-objects.html).
+Get a recent publicly available Amazon's annual report and copy it to the S3 bucket name noted previously. For a quick test, you can copy the [Amazon's 2022 annual report](https://s2.q4cdn.com/299287126/files/doc_financials/2023/ar/Amazon-2022-Annual-Report.pdf) using the [AWS S3 Console](https://docs.aws.amazon.com/AmazonS3/latest/userguide/upload-objects.html). The content from the S3 bucket will be automatically synchronized with the knowledgebase because the solution deployment watches for new content in the S3 bucket and triggers an ingestion workflow. 
+
+### Synchronize web content
+The deployed solution initializes the web data source called "WebCrawlerDataSource" with the url `https://www.aboutamazon.com/news/amazon-offices`. You need to synchronize this Web Crawler data source with the knowledgebase from the AWS console manually to search against the website content because the website ingestion is scheduled to happen in the future time. Select this data source from the Knowledge based on Amazon Bedrock console and initiate a "Sync" operation. See [Sync your data source with your Amazon Bedrock knowledge base](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-ingest.html) for details. Note that the website content will be available to the Q&A chatbot only after the synchronization is completed. Please use this [guidance](https://docs.aws.amazon.com/bedrock/latest/userguide/webcrawl-data-source-connector.html) when setting up websites as a datasource.
 
 ### Frontend 
 - From the frontend folder, run "npm install" to install the packages.
@@ -62,7 +61,7 @@ In the AWS console, go to the Amazon Bedrock microservice and select the knowled
 ## Security checks
 - npm audit is used to confirm there are no vulnerabilities.
 - SonarLint is used in VS Code to confirm there are no problems detected in the codebase.
-- [Amazon CodeWhisperer](https://aws.amazon.com/codewhisperer/) security checks are run to confirm there are no issues in the codebase.
+- [Amazon Q Developer](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/security-scans.html) project scan is run to confirm there are no vulnerabilities in the codebase.
 - S3 bucket created in this project is setup to enforce ssl requests only and encrypt data at rest.
 - S3 bucket is setup to block public access.
 - API Gateway is setup with AWS Web Application Firewall to allow requests from a specific IP address only.

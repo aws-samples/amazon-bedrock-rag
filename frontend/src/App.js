@@ -11,15 +11,14 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import LoadingSpinner from "./Spinner";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from "@mui/icons-material/Send";
-import UrlSourcesForm from "./UrlsForm";
-
+import UrlSourcesForm from "./WebUrlsForm";
+import {modelList} from "./RAGModels"
 
 const App = (props) => {
   const [history, setHistory] = useState([]);
-  const [modelList, setModelList] = useState([]);
   const [selectedModel, setSelectedModel] = useState(undefined);
   const [baseUrl, setBaseUrl] = useState(undefined);
-  const [question, setQuestion] = useState(undefined);
+  const [question, setQuestion] = useState('');
   const [spinner, setSpinner] = useState(false);
   const [sessionId, setSessionId] = useState(undefined);
   const [sourceUrlInfo, setSourceUrlInfo] = useState({
@@ -27,11 +26,14 @@ const App = (props) => {
     inclusionFilters: [],
     seedUrlList: [],
   });
-  const [hasWebDataSource, setHasWebDataSource] = useState(false)
+  const [hasWebDataSource, setHasWebDataSource] = useState(false);
 
   useEffect(() => {
-    const getModelAccessList = async () => {
-      fetch(baseUrl + "models", {
+    if (!baseUrl) {
+      return;
+    }
+    const getWebSourceConfiguration = async () => {
+      fetch(baseUrl + "urls", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -39,46 +41,19 @@ const App = (props) => {
       })
         .then((res) => res.json())
         .then((data) => {
-          setModelList(data.modelList);
+          setSourceUrlInfo({
+            exclusionFilters: data.exclusionFilters ?? [],
+            inclusionFilters: data.inclusionFilters ?? [],
+            seedUrlList: data.seedUrlList ?? [],
+          });
+          setHasWebDataSource(true);
         })
         .catch((err) => {
           console.log("err", err);
         });
+
     };
-
-    if (!baseUrl) {
-      return;
-    }
-    getModelAccessList();
-  }, [baseUrl]);
-
-  const getUrlList = async () => {
-    fetch(baseUrl + "urls", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {        
-        setSourceUrlInfo({
-          exclusionFilters: data.exclusionFilters ?? [],
-          inclusionFilters: data.inclusionFilters ?? [],
-          seedUrlList: data.seedUrlList ?? [],
-        });
-        setHasWebDataSource(true);
-      })
-      .catch((err) => {
-        console.log("err", err);
-      });
-  };
-
-
-  useEffect(() => {
-    if (!baseUrl) {
-      return;
-    }
-    getUrlList();
+    getWebSourceConfiguration();
   }, [baseUrl]);
 
   const handleSendQuestion = () => {
@@ -92,7 +67,7 @@ const App = (props) => {
       body: JSON.stringify({
         requestSessionId: sessionId,
         question: question,
-        modelArn: selectedModel,
+        modelId: selectedModel?.modelId,
       }),
     })
       .then((res) => res.json())
@@ -136,27 +111,29 @@ const App = (props) => {
     newExclusionFilters,
     newInclusionFilters
   ) => {
-      try {
-        const response = await fetch (baseUrl + "web-urls", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              urlList: [...new Set(urls)],
-              exclusionFilters: [...new Set(newExclusionFilters)],
-              inclusionFilters: [...new Set(newInclusionFilters)],
-            }),
-          })
-          if(!response.ok) {
-            return false
-          }
-          return true
-      } catch (error) {
-        console.log("Error:", error)
-        return false
-      }
+    try {
+      const response = await fetch(baseUrl + "web-urls", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          urlList: [...new Set(urls)],
+          exclusionFilters: [...new Set(newExclusionFilters)],
+          inclusionFilters: [...new Set(newInclusionFilters)],
+        }),
+      });
+      return !!response.ok;
+    } catch (error) {
+      console.log("Error:", error);
+      return false;
+    }
   };
+
+  const handleChangeModel = (model) => {
+    setSelectedModel(model);
+    setSessionId(undefined)
+  }
 
   return (
     <Box
@@ -192,7 +169,7 @@ const App = (props) => {
             setBaseUrl={setBaseUrl}
             baseUrl={baseUrl}
             modelList={modelList}
-            setSelectedModel={setSelectedModel}
+            setSelectedModel={handleChangeModel}
             selectedModel={selectedModel}
           />
           <Divider />
@@ -251,14 +228,18 @@ const App = (props) => {
             <SendIcon />
           </IconButton>
         </Box>
-        {hasWebDataSource ? <Box sx={{ paddingTop: "15px" }}>
-          <UrlSourcesForm
-            exclusionFilters={sourceUrlInfo.exclusionFilters}
-            inclusionFilters={sourceUrlInfo.inclusionFilters}
-            seedUrlList={sourceUrlInfo.seedUrlList.map((urlObj) => urlObj.url)}
-            handleUpdateUrls={handleUpdateUrls}
-          />
-        </Box> : null}
+        {hasWebDataSource ? (
+          <Box sx={{ paddingTop: "15px" }}>
+            <UrlSourcesForm
+              exclusionFilters={sourceUrlInfo.exclusionFilters}
+              inclusionFilters={sourceUrlInfo.inclusionFilters}
+              seedUrlList={sourceUrlInfo.seedUrlList.map(
+                (urlObj) => urlObj.url
+              )}
+              handleUpdateUrls={handleUpdateUrls}
+            />
+          </Box>
+        ) : null}
       </Paper>
     </Box>
   );

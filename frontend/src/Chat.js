@@ -6,6 +6,7 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 
 const Chat = (props) => {
   const history = props.history;
@@ -31,7 +32,7 @@ const Chat = (props) => {
       {history?.length > 0 ? (
         <Stack spacing={3}>
           {history?.map((msg) => (
-            <Box sx={{ padding: "8px" }}>
+            <Box sx={{ padding: "8px" }} key = {msg}>
               <Box sx={{ paddingBottom: "8px" }}>
                 <Card
                   raised
@@ -77,5 +78,8 @@ const Chat = (props) => {
     </Box>
   );
 };
+
+Chat.propTypes = { history: PropTypes.array };
+Chat.defaultProps = { history: [] };
 
 export default Chat;
