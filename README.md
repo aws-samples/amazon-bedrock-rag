@@ -52,7 +52,8 @@ The deployed solution initializes the web data source called "WebCrawlerDataSour
 - Run "npm run start" to launch the frontend application from the browser. 
 - Use the user interface shown in the browser.
 - For Step 1, enter the API Gateway endpoint URL noted previously.
-- For Step 2, you can enter a question of the form "Which cities have offices?" and press the enter key to see the generated answer including a citation.
+- For Step 2, select the model you want to use for RAG. The default model is **Anthropic Claude Instant**. 
+- For Step 3, you can enter a question of the form "Which cities have offices?" and press the enter key to see the generated answer including a citation.
 ![](./images/q-a-history.JPG)
 
 ## Cleanup
