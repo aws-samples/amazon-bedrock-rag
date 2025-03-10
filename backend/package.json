@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-agent": "^3.624.0",
-    "@cdklabs/generative-ai-cdk-constructs": "^0.1.106",
+    "@cdklabs/generative-ai-cdk-constructs": "^0.1.296",
     "@middy/core": "^5.2.4",
     "@middy/http-header-normalizer": "^5.2.4",
     "@middy/http-json-body-parser": "^5.2.4",
