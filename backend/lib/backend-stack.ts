@@ -29,9 +29,13 @@ export class BackendStack extends Stack {
 
     /** Knowledge Base */
 
-    const knowledgeBase = new bedrock.KnowledgeBase(this, "knowledgeBase", {
-      embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V1,
-    });
+    const knowledgeBase = new bedrock.VectorKnowledgeBase(
+      this,
+      "knowledgeBase",
+      {
+        embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V1,
+      }
+    );
 
     /** S3 bucket for Bedrock data source */
     const docsBucket = new s3.Bucket(this, "docsbucket-" + uuid.v4(), {
@@ -56,9 +60,10 @@ export class BackendStack extends Stack {
       bucket: docsBucket,
       knowledgeBase: knowledgeBase,
       dataSourceName: "docs",
-      chunkingStrategy: bedrock.ChunkingStrategy.FIXED_SIZE,
-      maxTokens: 500,
-      overlapPercentage: 20,
+      chunkingStrategy: bedrock.ChunkingStrategy.fixedSize({
+        maxTokens: 500,
+        overlapPercentage: 20,
+      }),
     });
 
     const s3PutEventSource = new S3EventSource(docsBucket, {
