@@ -27,7 +27,7 @@
     "@middy/http-json-body-parser": "^6.1.5",
     "@middy/util": "^6.1.5",
     "@types/uuid": "^10.0.0",
-    "aws-cdk-lib": "^2.182.0",
+    "aws-cdk-lib": "^2.185.0",
     "aws-sdk": "^2.1692.0",
     "constructs": "^10.4.2",
     "source-map-support": "^0.5.21",
