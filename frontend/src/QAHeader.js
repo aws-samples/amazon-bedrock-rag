@@ -29,14 +29,34 @@ export const QAHeader = (props) => {
     <div>
       <Typography
         variant="overline"
-        sx={{ width: "100%", paddingBottom: "25px" }}
+        sx={{ 
+          width: "100%", 
+          paddingBottom: "25px",
+          letterSpacing: "0.1em",
+          color: "#1e40af",
+          fontWeight: "600",
+          transition: "color 0.3s ease",
+          "&:hover": {
+            color: "#3b82f6"
+          }
+        }}
       >
         1. Input your base url here:
       </Typography>
       <OutlinedInput
         id="standard-basic"
         value={url}
-        sx={{ width: "100%" }}
+        sx={{ 
+          width: "100%",
+          transition: "all 0.3s ease",
+          "&:hover": {
+            boxShadow: "0 4px 12px rgba(59, 130, 246, 0.1)",
+            borderColor: "#3b82f6"
+          },
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "rgba(59, 130, 246, 0.3)"
+          }
+        }}
         name="Base Url"
         onChange={(event) => setUrl(event.target?.value)}
         onKeyDown={handleKeyDown}
@@ -47,23 +67,52 @@ export const QAHeader = (props) => {
               color="primary"
               onClick={() => setBaseUrl(url)}
               onMouseDown={() => setBaseUrl(url)}
+              sx={{
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  backgroundColor: "rgba(59, 130, 246, 0.1)",
+                  transform: "scale(1.1)"
+                }
+              }}
             >
               <InputIcon />
             </IconButton>
           </InputAdornment>
         }
       />
-      <br></br>
-      <br></br>
+      <br />
+      <br />
       <Divider />
-      <br></br>
+      <br />
       <Typography
         variant="overline"
-        sx={{ width: "100%", paddingBottom: "10px" }}
+        sx={{ 
+          width: "100%", 
+          paddingBottom: "10px",
+          letterSpacing: "0.1em",
+          color: "#1e40af",
+          fontWeight: "600",
+          transition: "color 0.3s ease",
+          "&:hover": {
+            color: "#3b82f6"
+          }
+        }}
       >
         2. Select a model
       </Typography>
-      <Alert severity="info">
+      <Alert 
+        severity="info" 
+        sx={{
+          transition: "all 0.3s ease",
+          "&:hover": {
+            transform: "translateY(-2px)",
+            boxShadow: "0 4px 12px rgba(59, 130, 246, 0.1)"
+          },
+          "& .MuiAlert-icon": {
+            color: "#3b82f6"
+          }
+        }}
+      >
         Make sure to check in your AWS console that you have access to the
         selected model. Note: if no model is selected, the default model used
         will be anthropic.claude-instant-v1. Check out the list of supported
@@ -72,11 +121,19 @@ export const QAHeader = (props) => {
           href="https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-supported.html"
           target="_blank"
           rel="noreferrer"
+          style={{ 
+            color: "#1d4ed8", 
+            textDecoration: "none",
+            fontWeight: "600",
+            transition: "color 0.3s ease"
+          }}
+          onMouseOver={(e) => e.target.style.color = "#3b82f6"}
+          onMouseOut={(e) => e.target.style.color = "#1d4ed8"}
         >
           here
         </a>
       </Alert>
-      <br></br>
+      <br />
       <Box sx={{ paddingBottom: "20px" }}>
         <Tooltip title={modelList.length === 0 ? modelListDisabledText : null}>
           <Autocomplete
@@ -87,13 +144,71 @@ export const QAHeader = (props) => {
             options={modelList}
             getOptionLabel={(option) => option.modelId ?? option}
             renderOption={(props, option) => (
-              <Typography {...props} variant="standard">
-                {option.modelName} : {option.modelId}{" "}
-              </Typography>
+              <Box 
+                {...props}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  transition: 'all 0.3s ease',
+                  borderRadius: '8px',
+                  '&:hover': {
+                    backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                    transform: 'translateX(5px)',
+                  }
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {option.modelName}
+                </Typography>
+                <Typography 
+                  variant="caption" 
+                  color="text.secondary"
+                  sx={{ 
+                    opacity: 0.7,
+                    transition: 'opacity 0.3s ease',
+                    '&:hover': {
+                      opacity: 1
+                    }
+                  }}
+                >
+                  {option.modelId}
+                </Typography>
+              </Box>
             )}
-            sx={{ width: "100%" }}
+            sx={{ 
+              width: "100%",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "12px",
+                transition: "all 0.3s ease",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.1)",
+                  borderColor: "#3b82f6"
+                },
+                "&.Mui-focused": {
+                  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.2)"
+                }
+              },
+              "& .MuiInputLabel-root": {
+                transition: "all 0.3s ease",
+                "&.Mui-focused": {
+                  color: "#3b82f6"
+                }
+              }
+            }}
             renderInput={(params) => (
-              <TextField {...params} label="Choose a Model" />
+              <TextField 
+                {...params} 
+                label="Choose a Model" 
+                variant="outlined"
+                sx={{
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "rgba(59, 130, 246, 0.3)"
+                  }
+                }}
+              />
             )}
             defaultValue={null}
             value={selectedModel?.modelId ?? null}
@@ -120,3 +235,5 @@ QAHeader.defaultProps = {
   selectedModel: null,
   baseUrl: "",
 };
+
+export default QAHeader;
