@@ -211,7 +211,7 @@ export const QAHeader = (props) => {
               />
             )}
             defaultValue={null}
-            value={selectedModel?.modelId ?? null}
+            value={selectedModel ?? null}
             onChange={(event, value) => {
               setSelectedModel(value);
             }}

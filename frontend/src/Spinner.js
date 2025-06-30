@@ -1,3 +1,5 @@
+//Loading spinner from original AWS project, currently unused in BRAG
+
 import * as React from "react";
 import CircularProgress from "@mui/material/CircularProgress";
 

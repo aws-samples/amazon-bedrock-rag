@@ -48,19 +48,21 @@ const TypingIndicator = () => (
         opacity: 0.8
       }}
     >
-      AI is typing...
+      AI is thinking...
     </Typography>
   </Box>
 );
 
 const Chat = (props) => {
   const history = props.history;
+  const onOpenSourcePanel = props.onOpenSourcePanel;
   const boxRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [feedbackStates, setFeedbackStates] = useState({});
   const [detailedFeedback, setDetailedFeedback] = useState({});
   const [feedbackSubmitting, setFeedbackSubmitting] = useState({});
   const [expandedErrors, setExpandedErrors] = useState({});
+  const [closingFeedback, setClosingFeedback] = useState({});
 
   // Format timestamp to 12-hour format
   const formatTimestamp = (timestamp) => {
@@ -132,6 +134,50 @@ const Chat = (props) => {
     const currentState = feedbackStates[index];
     const newState = currentState === type ? null : type;
     
+    // If we're unclicking (removing feedback), handle the transition properly
+    if (currentState === type && detailedFeedback[index]?.showDetailed) {
+      // Mark this feedback as closing to prevent conflicts
+      setClosingFeedback(prev => ({
+        ...prev,
+        [index]: true
+      }));
+      
+      // First hide the detailed feedback menu
+      setDetailedFeedback(prev => ({
+        ...prev,
+        [index]: {
+          ...prev[index],
+          showDetailed: false
+        }
+      }));
+      
+      // Wait for the Collapse animation to complete (Material-UI default is 300ms)
+      setTimeout(() => {
+        // Clear the feedback state
+        setFeedbackStates(prev => ({
+          ...prev,
+          [index]: null
+        }));
+        
+        // Clear detailed feedback completely
+        setDetailedFeedback(prev => {
+          const newState = { ...prev };
+          delete newState[index];
+          return newState;
+        });
+        
+        // Clear the closing state
+        setClosingFeedback(prev => {
+          const newState = { ...prev };
+          delete newState[index];
+          return newState;
+        });
+      }, 350); // Slightly longer than Material-UI's default 300ms to ensure completion
+      
+      return;
+    }
+    
+    // Normal feedback selection (not unclicking)
     setFeedbackStates(prev => ({
       ...prev,
       [index]: newState
@@ -149,13 +195,6 @@ const Chat = (props) => {
           submitted: false
         }
       }));
-    } else {
-      // Clear detailed feedback if main feedback is removed
-      setDetailedFeedback(prev => {
-        const newState = { ...prev };
-        delete newState[index];
-        return newState;
-      });
     }
   };
 
@@ -276,25 +315,25 @@ const Chat = (props) => {
                     display: "flex",
                     justifyContent: "flex-end",
                     alignItems: "flex-start",
-                    marginBottom: "20px",
-                    gap: "10px",
+                    marginBottom: "16px",
+                    gap: "12px",
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
                     <Typography
                       variant="caption"
                       sx={{
                         fontSize: "11px",
                         color: "#9ca3af",
                         fontWeight: "500",
-                        marginBottom: "2px",
                       }}
                     >
                       {getMessageTimestamp(msg, index)}
                     </Typography>
                     <Box
                       sx={{
-                        maxWidth: "70%",
+                        maxWidth: "60%",
+                        minWidth: "fit-content",
                         background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
                         color: "white",
                         borderRadius: "18px 18px 4px 18px",
@@ -309,7 +348,10 @@ const Chat = (props) => {
                           fontSize: "15px",
                           lineHeight: 1.5,
                           wordBreak: "break-word",
+                          overflowWrap: "break-word",
+                          hyphens: "none",
                           fontWeight: "400",
+                          whiteSpace: "pre-wrap",
                         }}
                       >
                         {msg.question}
@@ -351,7 +393,7 @@ const Chat = (props) => {
                           color: "#374151",
                         }}
                       >
-                        AI Bot
+                        Bot
                       </Typography>
                       <Typography
                         variant="caption"
@@ -518,7 +560,9 @@ const Chat = (props) => {
                         size="small"
                         onClick={() => {
                           const citation = formatCitation(msg.citation);
-                          if (citation.startsWith('http')) {
+                          if (onOpenSourcePanel) {
+                            onOpenSourcePanel(msg.citation);
+                          } else if (citation.startsWith('http')) {
                             window.open(citation, '_blank');
                           }
                         }}
@@ -600,7 +644,7 @@ const Chat = (props) => {
                     </Box>
 
                     {/* Detailed Feedback Section */}
-                    <Collapse in={detailedFeedback[index]?.showDetailed && !detailedFeedback[index]?.submitted}>
+                    <Collapse in={detailedFeedback[index]?.showDetailed && !detailedFeedback[index]?.submitted && !closingFeedback[index]}>
                       <Box sx={{ 
                         marginTop: '8px',
                         padding: '12px',
@@ -951,7 +995,13 @@ const Chat = (props) => {
   );
 };
 
-Chat.propTypes = { history: PropTypes.array };
-Chat.defaultProps = { history: [] };
+Chat.propTypes = { 
+  history: PropTypes.array,
+  onOpenSourcePanel: PropTypes.func
+};
+Chat.defaultProps = { 
+  history: [],
+  onOpenSourcePanel: null
+};
 
 export default Chat;
