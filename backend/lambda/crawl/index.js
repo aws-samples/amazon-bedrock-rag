@@ -1,7 +1,7 @@
 const {
-    BedrockAgentClient,
-    StartIngestionJobCommand,
-  } = require("@aws-sdk/client-bedrock-agent");
+  BedrockAgentClient,
+  StartIngestionJobCommand,
+} = require("@aws-sdk/client-bedrock-agent");
 const client = new BedrockAgentClient({ region: process.env.AWS_REGION });
 
 exports.handler = async (event, context) => {
