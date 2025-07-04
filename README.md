@@ -18,7 +18,7 @@ Q&A Chatbot
 Add new websites for web datasource
 ![](./images/Update_SeedURLs_Bedrock.jpg)
 
-- Note that with Amazon OpeSearch Serverless, you will be billed for [4 OCUs at a minimum](https://aws.amazon.com/opensearch-service/pricing/#Amazon_OpenSearch_Serverless) at all times. Follow instructions in the [Cleanup](#cleanup) section to avoid charges.
+- Note that with Amazon OpenSearch Serverless, you will be billed for [4 OCUs at a minimum](https://aws.amazon.com/opensearch-service/pricing/#Amazon_OpenSearch_Serverless) at all times. Follow instructions in the [Cleanup](#cleanup) section to avoid charges.
 
 ## Deploy solution
 
