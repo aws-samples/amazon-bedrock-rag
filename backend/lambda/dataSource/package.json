@@ -1,0 +1,1 @@
+{"name":"data-source-lambda","version":"1.0.0","dependencies":{"@aws-sdk/client-bedrock-agent":"latest"}}

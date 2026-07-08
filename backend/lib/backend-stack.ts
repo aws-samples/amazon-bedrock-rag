@@ -13,6 +13,7 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import * as uuid from "uuid";
 import { bedrock } from "@cdklabs/generative-ai-cdk-constructs";
+import * as bedrockCfn from "aws-cdk-lib/aws-bedrock";
 import { S3EventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
@@ -27,16 +28,87 @@ export class BackendStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    /** Knowledge Base */
+    /**
+     * Knowledge Base Type Selection
+     *
+     * Supports two modes via CDK context parameter "knowledgeBaseType":
+     *
+     * - "VECTOR" (legacy): Creates a VectorKnowledgeBase with Titan Embed Text V2
+     *   embedding model and an OpenSearch Serverless vector store. Suitable when you
+     *   need fine-grained control over embeddings and storage configuration.
+     *
+     * - "MANAGED": Creates a fully managed knowledge base using CfnKnowledgeBase
+     *   with type "MANAGED". No vector store or embedding model ARN is needed;
+     *   Bedrock handles embedding and storage internally. This is a simpler setup
+     *   with less infrastructure to manage.
+     */
+    const knowledgeBaseType: string =
+      this.node.tryGetContext("knowledgeBaseType") || "VECTOR";
 
-    const knowledgeBase = new bedrock.VectorKnowledgeBase(
-      this,
-      "knowledgeBase",
-      {
-        embeddingsModel: bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V2_1024,
-        vectorType: bedrock.VectorType.BINARY,
-      }
-    );
+    // Common references used by downstream resources regardless of KB type
+    let knowledgeBaseId: string;
+    let knowledgeBaseArn: string;
+
+    // The VectorKnowledgeBase L2 construct (only set for VECTOR type, used for S3DataSource)
+    let vectorKnowledgeBase: bedrock.VectorKnowledgeBase | undefined;
+
+    if (knowledgeBaseType === "MANAGED") {
+      /** Managed Knowledge Base - Bedrock handles embedding and storage */
+
+      const kbRole = new iam.Role(this, "ManagedKBRole", {
+        assumedBy: new iam.ServicePrincipal("bedrock.amazonaws.com"),
+        inlinePolicies: {
+          bedrockManaged: new iam.PolicyDocument({
+            statements: [
+              new iam.PolicyStatement({
+                actions: [
+                  "bedrock:Retrieve",
+                  "bedrock:AgenticRetrieveStream",
+                  "bedrock:GetDocumentContent",
+                  "bedrock:InvokeModel",
+                  "bedrock:InvokeModelWithResponseStream",
+                ],
+                resources: ["*"],
+              }),
+              new iam.PolicyStatement({
+                actions: ["s3:GetObject", "s3:ListBucket"],
+                resources: ["*"],
+              }),
+            ],
+          }),
+        },
+      });
+
+      const managedKnowledgeBase = new bedrockCfn.CfnKnowledgeBase(
+        this,
+        "managedKnowledgeBase",
+        {
+          name: "managed-knowledge-base",
+          roleArn: kbRole.roleArn,
+          knowledgeBaseConfiguration: {
+            type: "MANAGED",
+          },
+        } as any
+      );
+
+      knowledgeBaseId = managedKnowledgeBase.attrKnowledgeBaseId;
+      knowledgeBaseArn = managedKnowledgeBase.attrKnowledgeBaseArn;
+    } else {
+      /** Vector Knowledge Base - uses Titan embeddings + OpenSearch Serverless */
+
+      vectorKnowledgeBase = new bedrock.VectorKnowledgeBase(
+        this,
+        "knowledgeBase",
+        {
+          embeddingsModel:
+            bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V2_1024,
+          vectorType: bedrock.VectorType.BINARY,
+        }
+      );
+
+      knowledgeBaseId = vectorKnowledgeBase.knowledgeBaseId;
+      knowledgeBaseArn = vectorKnowledgeBase.knowledgeBaseArn;
+    }
 
     /** S3 bucket for Bedrock data source */
     const docsBucket = new s3.Bucket(this, "docsbucket-" + uuid.v4(), {
@@ -57,15 +129,48 @@ export class BackendStack extends Stack {
       autoDeleteObjects: true,
     });
 
-    const s3DataSource = new bedrock.S3DataSource(this, "s3DataSource", {
-      bucket: docsBucket,
-      knowledgeBase: knowledgeBase,
-      dataSourceName: "docs",
-      chunkingStrategy: bedrock.ChunkingStrategy.fixedSize({
-        maxTokens: 500,
-        overlapPercentage: 20,
-      }),
-    });
+    /**
+     * S3 Data Source setup:
+     * - For VECTOR type: uses the L2 S3DataSource construct tied to the VectorKnowledgeBase
+     * - For MANAGED type: uses CfnDataSource (L1) since managed KBs don't use the L2 construct
+     */
+    let s3DataSourceId: string;
+
+    if (knowledgeBaseType === "MANAGED") {
+      const managedS3DataSource = new bedrockCfn.CfnDataSource(
+        this,
+        "s3DataSource",
+        {
+          knowledgeBaseId: knowledgeBaseId,
+          name: "docs",
+          dataSourceConfiguration: {
+            type: "MANAGED_KNOWLEDGE_BASE_CONNECTOR",
+          } as any,
+        }
+      );
+      managedS3DataSource.addPropertyOverride('DataSourceConfiguration.ManagedKnowledgeBaseConnectorConfiguration', {
+        ConnectorParameters: {
+          type: 'S3',
+          version: '1',
+          connectionConfiguration: {
+            bucketName: docsBucket.bucketName,
+            bucketOwnerAccountId: this.account,
+          },
+        },
+      });
+      s3DataSourceId = managedS3DataSource.attrDataSourceId;
+    } else {
+      const s3DataSource = new bedrock.S3DataSource(this, "s3DataSource", {
+        bucket: docsBucket,
+        knowledgeBase: vectorKnowledgeBase!,
+        dataSourceName: "docs",
+        chunkingStrategy: bedrock.ChunkingStrategy.fixedSize({
+          maxTokens: 500,
+          overlapPercentage: 20,
+        }),
+      });
+      s3DataSourceId = s3DataSource.dataSourceId;
+    }
 
     const s3PutEventSource = new S3EventSource(docsBucket, {
       events: [s3.EventType.OBJECT_CREATED_PUT],
@@ -82,7 +187,11 @@ export class BackendStack extends Stack {
         functionName: `create-web-data-source`,
         timeout: Duration.minutes(1),
         environment: {
-          KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
+          KNOWLEDGE_BASE_ID: knowledgeBaseId,
+          KNOWLEDGE_BASE_TYPE: knowledgeBaseType,
+        },
+        bundling: {
+          externalModules: [],  // Bundle ALL modules including AWS SDK
         },
       }
     );
@@ -113,8 +222,8 @@ export class BackendStack extends Stack {
       functionName: `start-ingestion-trigger`,
       timeout: Duration.minutes(15),
       environment: {
-        KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
-        DATA_SOURCE_ID: s3DataSource.dataSourceId,
+        KNOWLEDGE_BASE_ID: knowledgeBaseId,
+        DATA_SOURCE_ID: s3DataSourceId,
         BUCKET_ARN: docsBucket.bucketArn,
       },
     });
@@ -124,7 +233,7 @@ export class BackendStack extends Stack {
     lambdaIngestionJob.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["bedrock:StartIngestionJob"],
-        resources: [knowledgeBase.knowledgeBaseArn, docsBucket.bucketArn],
+        resources: [knowledgeBaseArn, docsBucket.bucketArn],
       })
     );
 
@@ -136,7 +245,7 @@ export class BackendStack extends Stack {
       functionName: `start-web-crawl-trigger`,
       timeout: Duration.minutes(15),
       environment: {
-        KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
+        KNOWLEDGE_BASE_ID: knowledgeBaseId,
         DATA_SOURCE_ID:
           createWebDataSourceResource.getAttString("DataSourceId"),
       },
@@ -145,7 +254,7 @@ export class BackendStack extends Stack {
     lambdaCrawlJob.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["bedrock:StartIngestionJob"],
-        resources: [knowledgeBase.knowledgeBaseArn],
+        resources: [knowledgeBaseArn],
       })
     );
 
@@ -163,7 +272,7 @@ export class BackendStack extends Stack {
       functionName: `update-web-crawl-urls`,
       timeout: Duration.minutes(15),
       environment: {
-        KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
+        KNOWLEDGE_BASE_ID: knowledgeBaseId,
         DATA_SOURCE_ID:
           createWebDataSourceResource.getAttString("DataSourceId"),
         DATA_SOURCE_NAME: "WebCrawlerDataSource",
@@ -173,7 +282,7 @@ export class BackendStack extends Stack {
     lambdaUpdateWebUrls.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["bedrock:GetDataSource", "bedrock:UpdateDataSource"],
-        resources: [knowledgeBase.knowledgeBaseArn],
+        resources: [knowledgeBaseArn],
       })
     );
 
@@ -185,7 +294,7 @@ export class BackendStack extends Stack {
       functionName: `get-web-crawl-urls`,
       timeout: Duration.minutes(15),
       environment: {
-        KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
+        KNOWLEDGE_BASE_ID: knowledgeBaseId,
         DATA_SOURCE_ID:
           createWebDataSourceResource.getAttString("DataSourceId"),
       },
@@ -194,7 +303,7 @@ export class BackendStack extends Stack {
     lambdaGetWebUrls.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["bedrock:GetDataSource"],
-        resources: [knowledgeBase.knowledgeBaseArn],
+        resources: [knowledgeBaseArn],
       })
     );
 
@@ -205,7 +314,7 @@ export class BackendStack extends Stack {
           "bedrock:UpdateDataSource",
           "bedrock:DeleteDataSource",
         ],
-        resources: [knowledgeBase.knowledgeBaseArn],
+        resources: [knowledgeBaseArn],
       })
     );
 
@@ -228,7 +337,7 @@ export class BackendStack extends Stack {
       //query lambda duration set to match API Gateway max timeout
       timeout: Duration.seconds(29),
       environment: {
-        KNOWLEDGE_BASE_ID: knowledgeBase.knowledgeBaseId,
+        KNOWLEDGE_BASE_ID: knowledgeBaseId,
       },
     });
 
