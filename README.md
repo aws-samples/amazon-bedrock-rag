@@ -72,6 +72,51 @@ The deployed solution initializes the web data source called "WebCrawlerDataSour
 
 Use "cdk destroy" to delete the stack of cloud resources created in this solution deployment.
 
+## Managed Knowledge Bases (New)
+
+This solution was originally built with a **vector knowledge base** using Amazon OpenSearch Serverless. Amazon Bedrock now also supports **Managed Knowledge Bases**, which eliminate the need to provision and manage an external vector store.
+
+With Managed Knowledge Bases:
+- Bedrock handles embedding, storage, and retrieval automatically
+- No OpenSearch Serverless collection required (saves on OCU costs)
+- Supports agentic retrieval with intelligent query decomposition and managed reranking
+- Uses `managedSearchConfiguration` instead of `vectorSearchConfiguration` for retrieval
+
+To create a managed knowledge base via AWS CLI:
+
+```bash
+aws bedrock-agent create-knowledge-base \
+  --name "my-managed-kb" \
+  --description "Managed RAG KB" \
+  --role-arn "arn:aws:iam::ACCOUNT:role/AmazonBedrockExecutionRoleForKnowledgeBase" \
+  --knowledge-base-configuration '{
+    "type": "MANAGED",
+    "managedKnowledgeBaseConfiguration": {
+      "embeddingModelType": "MANAGED"
+    }
+  }'
+```
+
+The CDK stack in this project has been updated to support both managed and vector knowledge bases. Set `KNOWLEDGE_BASE_TYPE=MANAGED` in the Lambda environment to use managed retrieval.
+
+> **Note:** Managed KBs require `boto3 >= 1.43` for managed search and agentic retrieval.
+
+**Reranking options** for managed search: `MANAGED` (default — automatic), `NONE` (disable reranking), `CUSTOM` (your own Bedrock reranking model e.g. Cohere Rerank v3.5).
+
+**Required IAM Permissions:**
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "bedrock:Retrieve",
+    "bedrock:AgenticRetrieve"
+  ],
+  "Resource": "arn:aws:bedrock:<region>:<account-id>:knowledge-base/<kb-id>"
+}
+```
+
+**Resources:** [Build a Managed KB](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-build-managed.html) | [Retrieve API](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-test-retrieve.html) | [Web Crawler Connector](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-managed-ds-webcrawler.html) | [Agentic Retrieval](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-test-agentic.html)
+
 ## Security checks
 
 - npm audit is used to confirm there are no vulnerabilities.
