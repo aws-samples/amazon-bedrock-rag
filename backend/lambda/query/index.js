@@ -4,6 +4,7 @@ const {
 } = require("@aws-sdk/client-bedrock-agent-runtime");
 
 const client = new BedrockAgentRuntimeClient({
+  customUserAgent: [["aws-samples-rag", "bedrock-kb"]],
   region: process.env.AWS_REGION,
 });
 
