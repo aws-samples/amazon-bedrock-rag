@@ -36,7 +36,7 @@
   "Effect": "Allow",
   "Action": [
     "bedrock:Retrieve",
-    "bedrock:AgenticRetrieve"
+    "bedrock:AgenticRetrieveStream"
   ],
   "Resource": "arn:aws:bedrock:<region>:<account-id>:knowledge-base/<kb-id>"
 }

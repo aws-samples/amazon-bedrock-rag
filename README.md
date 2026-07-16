@@ -109,7 +109,7 @@ The CDK stack in this project has been updated to support both managed and vecto
   "Effect": "Allow",
   "Action": [
     "bedrock:Retrieve",
-    "bedrock:AgenticRetrieve"
+    "bedrock:AgenticRetrieveStream"
   ],
   "Resource": "arn:aws:bedrock:<region>:<account-id>:knowledge-base/<kb-id>"
 }
