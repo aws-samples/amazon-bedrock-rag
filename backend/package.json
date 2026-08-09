@@ -20,7 +20,7 @@
     "typescript": "~5.8.2"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-agent": "^3.764.0",
+    "@aws-sdk/client-bedrock-agent": "^3.995.0",
     "@cdklabs/generative-ai-cdk-constructs": "^0.1.296",
     "@middy/core": "^6.1.5",
     "@middy/http-header-normalizer": "^6.1.5",
